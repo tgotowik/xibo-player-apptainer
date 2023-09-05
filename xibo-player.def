@@ -43,4 +43,4 @@ From: ubuntu:jammy
 
 %help
 # Text to show when help for the image is requested
-For help contact: ceadmin@campus.upb.de
+For help contact: https://github.com/tgotowik/xibo-player-apptainer
