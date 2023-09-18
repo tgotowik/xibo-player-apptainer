@@ -3,29 +3,42 @@ From: ubuntu:jammy
 
 %post
 # After install (guest)
+  # update && upgrade
   apt update
   apt upgrade -y
-  apt install -y wget
+  # set timezone
+  ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+  DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+  dpkg-reconfigure --frontend noninteractive tzdata
+  # install xorg xauth
+  apt install xorg xauth -y
+  # cabextract and other packages
+  apt install -y wget cabextract
+  # https://gstreamer.freedesktop.org/documentation/installing/on-linux.html?gi-language=c#
+  apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio
+  # create user for wine/tricks
   useradd -m -s /bin/bash xuser
   usermod -aG sudo xuser
-  su - xuser -c "echo \$HOME"
-  # wine 7.17 
+  chown xuser:xuser -R /home/xuser
+  # wine latest
   dpkg --add-architecture i386 
   mkdir -pm755 /etc/apt/keyrings
   wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
   wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources
   apt update
-  apt install -y --install-recommends winehq-staging=7.17~jammy-1 wine-staging=7.17~jammy-1 wine-staging-amd64=7.17~jammy-1 wine-staging-i386=7.17~jammy-1
+  apt install -y --install-recommends winehq-stable
+  echo -e "\e[31m$(wine --version)\e[0m"
   # winetricks
   apt install -y winetricks
-  su - xuser -c "echo 'export WINEPREFIX=\$HOME/.wine' >> \$HOME/.bashrc"
-  su - xuser -c "mkdir -p \$HOME/.wine"
-  su - xuser -c "chmod -R 755 \$HOME/.wine"
-  su - xuser -c "winecfg -v win10"
-  su - xuser -c "winetricks -q dotnet472 corefonts"
-  su - xuser -c "winetricks -q dxvk"
-  su - xuser -c "wget 'https://github.com/xibosignage/xibo-dotnetclient/releases/download/3R301/xibo-client-v3-R301.1-win32-x86.msi'"
-  su - xuser -c "wine ./xibo-client-v3-R301.1-win32-x86.msi"
+  su - xuser -c "echo 'export WINEPREFIX=\$HOME/.wine32 WINEARCH=win32' >> \$HOME/.bashrc"
+  su - xuser -c "mkdir -p \$HOME/.wine32"
+  su - xuser -c "chmod -R 755 \$HOME/.wine32"
+  apt install -y libvulkan1 libvulkan1:i386
+  su - xuser -c "WINEDEBUG="fixme-all" WINEPREFIX=\$HOME/.wine32 WINEARCH=win32 winecfg -v win10"
+  su - xuser -c "WINEPREFIX=\$HOME/.wine32 WINEARCH=win32 winetricks --force -q dotnet48"
+  su - xuser -c "WINEPREFIX=\$HOME/.wine32 WINEARCH=win32 winetricks -q corefonts dxvk nocrashdialog"
+  #su - xuser -c "wget 'https://github.com/xibosignage/xibo-dotnetclient/releases/download/3R310/xibo-client-v3-R310.1-win32-x86.msi'"
+  #su - xuser -c "WINEPREFIX=\$HOME/.wine32 WINEARCH=win32 wine ./xibo-client-v3-R310.1-win32-x86.msi"
 
 %runscript
 # Script to run when executing environment
