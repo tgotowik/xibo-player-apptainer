@@ -6,7 +6,8 @@ The recipe file contains all the commands to build an image that will run Ubuntu
 
 # Usage
 Install Apptainer with setuid
-apptainer build --sandbox xibo-player.sif xibo-player.def # for testing
+- apptainer build --sandbox xibo-player/ xibo-player.def # for testing
+- apptainer build xibo-player.sif xibo-player.def # for productive
 
 # Contribute
 https://github.com/xibosignage/xibo-linux/issues/277

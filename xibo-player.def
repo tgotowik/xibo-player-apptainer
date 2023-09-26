@@ -3,42 +3,66 @@ From: ubuntu:jammy
 
 %post
 # After install (guest)
+
   # update && upgrade
   apt update
   apt upgrade -y
-  # set timezone
-  ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+
+  # debugging and other tools
+  apt install -y nano less wget
+
+  # set timezone and locales
+  ln -fs /usr/share/zoneinfo/Europe/Berlin /etc/localtime
+  DEBIAN_FRONTEND=noninteractive apt-get install -y keyboard-configuration
+  # install tzdata
   DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
   dpkg-reconfigure --frontend noninteractive tzdata
-  # install xorg xauth
+
+  # install xorg xauth for display
   apt install xorg xauth -y
-  # cabextract and other packages
-  apt install -y wget cabextract
+  # install cabextract
+  apt install -y cabextract
   # https://gstreamer.freedesktop.org/documentation/installing/on-linux.html?gi-language=c#
   apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio
-  # create user for wine/tricks
-  useradd -m -s /bin/bash xuser
-  usermod -aG sudo xuser
-  chown xuser:xuser -R /home/xuser
-  # wine latest
+  
+  # install wine latest stable: 8.0.2, winetricks
   dpkg --add-architecture i386 
   mkdir -pm755 /etc/apt/keyrings
   wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
   wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources
   apt update
   apt install -y --install-recommends winehq-stable
-  echo -e "\e[31m$(wine --version)\e[0m"
-  # winetricks
   apt install -y winetricks
+  # install several dependencies
+  # libvulkan.1.so 
+  apt install -y libvulkan1 libvulkan1:i386
+  # ????? not sure about that ??????????
+  apt install -y winbind
+  apt install -y mono-complete
+  apt install -y vulkan-tools
+  apt install -y pciutils  
+  apt install -y nvidia-driver-535
+
+  # create user for wine/tricks
+  useradd -m -s /bin/bash xuser
+  usermod -aG sudo xuser
+  chown xuser:xuser -R /home/xuser
+
+  # set wineprefix wine32
   su - xuser -c "echo 'export WINEPREFIX=\$HOME/.wine32 WINEARCH=win32' >> \$HOME/.bashrc"
+  su - xuser -c "echo 'export DISPLAY=:1' >> \$HOME/.bashrc"
   su - xuser -c "mkdir -p \$HOME/.wine32"
   su - xuser -c "chmod -R 755 \$HOME/.wine32"
-  apt install -y libvulkan1 libvulkan1:i386
-  su - xuser -c "WINEDEBUG="fixme-all" WINEPREFIX=\$HOME/.wine32 WINEARCH=win32 winecfg -v win10"
-  su - xuser -c "WINEPREFIX=\$HOME/.wine32 WINEARCH=win32 winetricks --force -q dotnet48"
+  # configure wine/tricks
+  su - xuser -c "WINEPREFIX=\$HOME/.wine32 WINEARCH=win32 winecfg -v win10"
+  su - xuser -c "WINEPREFIX=\$HOME/.wine32 WINEARCH=win32 winetricks --force -q dotnet472"
   su - xuser -c "WINEPREFIX=\$HOME/.wine32 WINEARCH=win32 winetricks -q corefonts dxvk nocrashdialog"
-  #su - xuser -c "wget 'https://github.com/xibosignage/xibo-dotnetclient/releases/download/3R310/xibo-client-v3-R310.1-win32-x86.msi'"
-  #su - xuser -c "WINEPREFIX=\$HOME/.wine32 WINEARCH=win32 wine ./xibo-client-v3-R310.1-win32-x86.msi"
+  # Download and install xibo-client
+  su - xuser -c "wget 'https://github.com/xibosignage/xibo-dotnetclient/releases/download/3R310/xibo-client-v3-R310.1-win32-x86.msi'"
+  su - xuser -c "WINEPREFIX=\$HOME/.wine32 WINEARCH=win32 wine ./xibo-client-v3-R310.1-win32-x86.msi"
+  # disable watchdog --> The watchdog program does not work at all. Either it gets stuck in a loop of spawning processes or starts leaking memory, causing the Linux kernel to terminate Wine all together once available memory runs out.
+  su - xuser -c "mv '\$HOME/.wine32/drive_c/Program\ Files/Xibo\ Player/watchdog/x64/XiboClientWatchdog.exe' '\$HOME/.wine32/drive_c/Program\ Files/Xibo\ Player/watchdog/x64/DXiboClientWatchdog.exe'"
+  su - xuser -c "mv '\$HOME/.wine32/drive_c/Program\ Files/Xibo\ Player/watchdog/x86/XiboClientWatchdog.exe' '\$HOME/.wine32/drive_c/Program\ Files/Xibo\ Player/watchdog/x86/DXiboClientWatchdog.exe'"
 
 %runscript
 # Script to run when executing environment
