@@ -34,7 +34,7 @@ From: ubuntu:jammy
   apt install -y --install-recommends winehq-stable
   apt install -y winetricks
   # install several dependencies
-  # libvulkan.1.so 
+  # libvulkan.1.so l
   apt install -y libvulkan1 libvulkan1:i386
   # ????? not sure about that ??????????
   apt install -y winbind
